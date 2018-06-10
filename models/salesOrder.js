@@ -2,10 +2,35 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 
 var SalesOrderSchema = new mongoose.Schema({
-    
+    _author: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+    },
     _retailer: {
         type: mongoose.Schema.Types.ObjectId,
         required: true
+    },
+    orderStatus: {
+        orderCreated: {
+            type: Boolean,
+            default: true
+        },
+        procured: {
+            type: Boolean,
+            default: false
+        },
+        inTransit: {
+            type: Boolean,
+            default: false
+        },
+        delivered: {
+            type: Boolean,
+            default: false
+        },
+        cashCollected: {
+            type: Boolean,
+            default: false
+        }
     },
     orderDate: {
         type: Number,
@@ -17,15 +42,21 @@ var SalesOrderSchema = new mongoose.Schema({
     },
     itemType: {
         type: String,
-        required: [true, 'Please enter the Item Type']
+        required: [true, 'Please enter the Item Type'],
+        trim: true
     },
     itemSubType: {
         type: String,
+        trim: true,
         required: [true, 'Please enter the Item Sub Type']
     },
     itemName: {
         type: String,
+        trim: true,
         required: [true, 'Please enter the Item Name']
+    },
+    remarks: {
+        type: String
     },
     quantity: {
         type: Number,
@@ -43,7 +74,7 @@ var SalesOrderSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
-    commision: {
+    commission: {
         type: Number,
         default: 1
     },
