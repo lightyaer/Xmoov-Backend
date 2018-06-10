@@ -48,8 +48,6 @@ router.post('/signup', async (req, res) => {
                 })
         }
 
-        res.status(200).send({ message: 'OTP has been sent' + otp });
-
     } catch (e) {
 
         res.status(400).send({ message: 'Couldn\'t send otp' })
