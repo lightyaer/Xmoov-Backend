@@ -5,6 +5,7 @@ const cors = require('cors');
 const { ObjectID } = require('mongodb');
 const { authenticate } = require('../../middleware/authenticate');
 const { SalesOrder } = require('../../../models/salesOrder');
+const { PurchaseOrder } = require('../../../models/purchaseOrder');
 
 router.use(cors());
 
@@ -13,21 +14,22 @@ router.use(cors());
 //GET ALL SALES ORDERS FOR A DRIVER
 router.get('/all', authenticate, async (req, res) => {
 
-    let stageKey, stageValue, orderDate, itemName;
-    stageKey = req.query.stageKey;
-    stageValue = req.query.stageValue === 'true' ? true : false;
-    stageKey = "orderStatus." + stageKey;
-    
-    orderDate = Number(req.query.orderDate);
-    itemName = req.query.itemName ? req.query.itemName : "";
-
     try {
+
+        let stageKey, stageValue, orderDate, itemName;
+        stageKey = req.query.stageKey;
+        stageValue = req.query.stageValue === 'true' ? true : false;
+        stageKey = "orderStatus." + stageKey;
+
+        orderDate = Number(req.query.orderDate);
+        itemName = req.query.itemName ? req.query.itemName : "";
+
         const salesOrders = await SalesOrder.find(
             {
                 _author: req.driver.id,
-                [stageKey]:stageValue,
-                orderDate : { $lte : orderDate},
-                itemName: new RegExp( itemName ,"i")            
+                [stageKey]: stageValue,
+                orderDate: { $lte: orderDate },
+                itemName: new RegExp(itemName, "i")
             }
         );
         if (!salesOrders) {
@@ -183,12 +185,15 @@ router.delete('/:id', authenticate, async (req, res) => {
             return res.status(400).send({ message: 'Sales Order ID is Invalid' });
         }
 
-        const salesOrder = await SalesOrder.findByIdAndRemove({ _id: id, _author: req.driver._id })
-        if (salesOrder) {
-            return res.status(200).send(salesOrder);
+        const purchaseOrder = await PurchaseOrder.findOne({ _salesOrder: id, _author: req.driver._id });
+        if (!purchaseOrder) {
+            const salesOrder = await SalesOrder.findByIdAndRemove({ _id: id, _author: req.driver._id })
+            if (salesOrder) {
+                return res.status(200).send(salesOrder);
+            }
         }
 
-        return res.status(400).send({ message: 'Deletion not Possible' })
+        return res.status(400).send({ message: 'Deletion not Possible, Purchase Order/s are linked to this Sales Order' })
 
     } catch (e) {
         return res.status(400).send({ message: 'Sales Order couldn\'t be deleted, Server Error' });

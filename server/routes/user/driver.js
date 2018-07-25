@@ -33,15 +33,15 @@ router.post('/signup', async (req, res) => {
         );
 
         if (text) {
-            nexmo.message.sendSms("NEXMO", body.mobileNo, text, { type: 'unicode' },
+            nexmo.message.sendSms("XMOOVS", body.mobileNo, 'OTP for Signing up is ' + otp, { type: 'unicode' },
                 (err, responseData) => {
                     if (err) {
-                        console.log(err);
+
                         res.status(400).send({ message: 'error in sending OTP' })
                     }
                     if (responseData) {
-                        console.log(responseData);
-                        res.status(200).send({ message: 'OTP has been sent' + otp });
+
+                        res.status(200).send({ message: 'OTP has been sent ' + otp });
                     }
 
 
@@ -55,7 +55,8 @@ router.post('/signup', async (req, res) => {
 })
 
 //VERIFY DRIVER MOBILE NO AND SAVE DB
-router.post('/otp', async (req, res) => {
+router.post('/otp', cors(corsOptions), async (req, res) => {
+
     try {
         if (req.body.otp === otp) {
             body.otpAuth = true;
@@ -68,6 +69,7 @@ router.post('/otp', async (req, res) => {
             res.status(400).send({ message: 'OTP didn\'t Match' })
         }
     } catch (e) {
+        console.log(e);
         res.status(400).send({ message: 'Couldn\'t Sign Up' })
     }
 })
@@ -94,7 +96,7 @@ router.post('/login', cors(corsOptions), async (req, res) => {
         }
     } catch (e) {
 
-        return res.status(400).send({ message: 'Login not Successful' });
+        return res.status(400).send({ message: e.message });
     }
 })
 

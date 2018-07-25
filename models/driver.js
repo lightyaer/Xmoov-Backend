@@ -56,7 +56,7 @@ var DriverSchema = new mongoose.Schema({
     },
     subscribedOn: {
         type: Number,
-        required:true
+        required: true
     },
     tokens: [{
         access: {
@@ -74,7 +74,7 @@ var DriverSchema = new mongoose.Schema({
 DriverSchema.methods.toJSON = function () {
     var user = this;
     var userObject = user.toObject();
-    return _.pick(userObject, ['_id', 'email', 'address', 'vehicleRegNo', 'mobileNo', 'name','subscribedOn','otpAuth']);
+    return _.pick(userObject, ['_id', 'email', 'address', 'vehicleRegNo', 'mobileNo', 'name', 'subscribedOn', 'otpAuth']);
 }
 
 DriverSchema.methods.generateAuthToken = function () {
@@ -129,7 +129,7 @@ DriverSchema.statics.findByCredentials = function (email, password) {
                 if (hash) {
                     resolve(driver);
                 } else {
-                    reject();
+                    reject({ message: "Please check the Username and Password." });
                 }
             })
         })
