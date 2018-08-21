@@ -1,3 +1,4 @@
 node_modules
 server/config/config.json
 .vscode
+server/routes/admin/uploads

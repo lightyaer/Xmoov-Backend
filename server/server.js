@@ -7,8 +7,8 @@ var retailerRoutes = require('./routes/user/retailer');
 var salesOrderRoutes = require('./routes/user/salesOrder');
 var purchaseOrderRoutes = require('./routes/user/purchaseOrder');
 var adminRoutes = require('./routes/admin/admin');
-
-
+var fileRoutes = require('./routes/admin/saveCsvToDb');
+var productRoutes = require('./routes/user/product');
 
 var app = express();
 var PORT = process.env.PORT;
@@ -24,6 +24,10 @@ app.use('/retailers', retailerRoutes);
 app.use('/salesorders', salesOrderRoutes);
 
 app.use('/purchaseorders', purchaseOrderRoutes);
+
+app.use('/products', productRoutes);
+
+app.use('/uploads', fileRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is up on Port ${PORT}`);
