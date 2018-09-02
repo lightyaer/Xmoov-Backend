@@ -91,14 +91,16 @@ DriverSchema.statics.findByToken = function (token) {
     var Driver = this;
     var decoded;
     try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET);
+       
+        decoded = jwt.verify(token,"sKJHDfiugasdjbf2740273kjsdbhfjSKJDf");
         return Driver.findOne({
             '_id': decoded._id,
             'tokens.token': token,
             'tokens.access': 'auth'
-        })
+        });
     }
     catch (e) {
+   
         return Promise.reject();
     }
 }
@@ -120,6 +122,7 @@ DriverSchema.pre('save', function (next) {
 DriverSchema.statics.findByCredentials = function (email, password) {
     var Driver = this;
     return Driver.findOne({ email }).then(driver => {
+        driver.otpAuth = driver.otpAuth ? true : false;
         if (driver.otpAuth && !driver) {
             return Promise.reject();
         }

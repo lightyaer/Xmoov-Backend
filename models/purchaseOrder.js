@@ -11,24 +11,10 @@ const purchaseOrderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true
     },
-    itemCode: {
-        type: Number,
-        required: [true, 'Please enter the Item Code']
-    },
-    itemType: {
-        type: String,
-        required: [true, 'Please enter the Item Type'],
-        trim: true
-    },
-    itemSubType: {
-        type: String,
-        trim: true,
-        required: [true, 'Please enter the Item Sub Type']
-    },
-    itemName: {
-        type: String,
-        trim: true,
-        required: [true, 'Please enter the Item Name']
+    _product: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: [true, 'Please select a product'],
+        ref: 'Product ID'
     },
     remarks: {
         type: String

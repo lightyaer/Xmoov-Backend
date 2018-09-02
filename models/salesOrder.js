@@ -1,14 +1,17 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const { SalesOrderProductSchema } = require('./salesOrderProducts');
 
 var SalesOrderSchema = new mongoose.Schema({
     _author: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true
+        required: true,
+        ref: 'Driver ID'
     },
     _retailer: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true
+        required: true,
+        ref: 'Retailer ID'
     },
     orderStatus: {
         orderCreated: {
@@ -36,35 +39,9 @@ var SalesOrderSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Please enter the Order Date'],
     },
-    itemCode: {
-        type: Number,
-        required: [true, 'Please enter the Item Code']
-    },
-    itemType: {
-        type: String,
-        required: [true, 'Please enter the Item Type'],
-        trim: true
-    },
-    itemSubType: {
-        type: String,
-        trim: true,
-        required: [true, 'Please enter the Item Sub Type']
-    },
-    itemName: {
-        type: String,
-        trim: true,
-        required: [true, 'Please enter the Item Name']
-    },
+    _orderProduct: [SalesOrderProductSchema],
     remarks: {
         type: String
-    },
-    quantity: {
-        type: Number,
-        required: [true, 'Please enter the Quantity']
-    },
-    unitPrice: {
-        type: Number,
-        default: 1
     },
     tax: {
         type: Number,

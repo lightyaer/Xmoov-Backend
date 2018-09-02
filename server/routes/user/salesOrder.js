@@ -1,12 +1,12 @@
 const router = require('express').Router();
 const _ = require('lodash');
 const cors = require('cors');
-
 const { ObjectID } = require('mongodb');
+const mongoose = require('mongoose');
 const { authenticate } = require('../../middleware/authenticate');
 const { SalesOrder } = require('../../../models/salesOrder');
 const { PurchaseOrder } = require('../../../models/purchaseOrder');
-
+const { Product } = require('../../../models/products');
 router.use(cors());
 
 //#region SALES ORDER
@@ -15,28 +15,59 @@ router.use(cors());
 router.get('/all', authenticate, async (req, res) => {
 
     try {
-
-        let stageKey, stageValue, orderDate, itemName;
+        console.log(req.driver._id.toString());
+        let stageKey, stageValue, orderDate;
         stageKey = req.query.stageKey;
         stageValue = req.query.stageValue === 'true' ? true : false;
         stageKey = "orderStatus." + stageKey;
-
         orderDate = Number(req.query.orderDate);
-        itemName = req.query.itemName ? req.query.itemName : "";
 
-        const salesOrders = await SalesOrder.find(
+        const salesOrders = await SalesOrder.aggregate([
             {
-                _author: req.driver.id,
-                [stageKey]: stageValue,
-                orderDate: { $lte: orderDate },
-                itemName: new RegExp(itemName, "i")
+                $match: {
+                    _author: mongoose.Types.ObjectId(req.driver.id.toString()),
+                    [stageKey]: stageValue,
+                    orderDate: { $lte: orderDate }
+                }
+            },
+            {
+                $unwind: {
+                    path: "$_orderProduct"
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_orderProduct._product',
+                    foreignField: '_id',
+                    as: 'productObjects'
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    productObjects: {
+                        $push: "$productObjects"
+                    },
+                    orderDate: { $first: "$orderDate" },
+                    orderStatus: { $first: "$orderStatus" },
+                    handling: { $first: "$handling" },
+                    discount: { $first: "$discount" },
+                    tax: { $first: "$tax" },
+                    total: { $first: "$total" },
+                    commission: { $first: "$commission" },
+                    grandTotal: { $first: "$grandTotal" },
+                    _author: { $first: "$_author" },
+                    _retailer: { $first: "$_retailer" }
+                }
             }
-        );
+        ]);
         if (!salesOrders) {
             res.status(200).send({ message: 'No Sales Orders created' })
         }
         return res.status(200).send(salesOrders);
     } catch (e) {
+        console.log(e);
         return res.status(400).send({ message: 'Couldn\'t get a list of salesOrder' })
     }
 
@@ -47,11 +78,52 @@ router.get('/:id', authenticate, async (req, res) => {
 
     try {
         let id = req.params.id;
+
         if (!ObjectID.isValid(id)) {
             return res.status(400).send({ message: 'Sales Order ID is Invalid' });
         }
-        const salesOrder = await SalesOrder.findOne({ _id: id, _author: req.driver._id })
+        const salesOrder = await SalesOrder.aggregate([
+            {
+                $match: {
+                    _id: mongoose.Types.ObjectId(id),
+                    _author: mongoose.Types.ObjectId(req.driver._id.toString())
+                }
+            },
+            {
+                $unwind: {
+                    path: "$_orderProduct"
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_orderProduct._product',
+                    foreignField: '_id',
+                    as: 'productObjects'
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    productObjects: {
+                        $push: "$productObjects"
+                    },
+                    orderDate: { $first: "$orderDate" },
+                    orderStatus: { $first: "$orderStatus" },
+                    handling: { $first: "$handling" },
+                    discount: { $first: "$discount" },
+                    tax: { $first: "$tax" },
+                    total: { $first: "$total" },
+                    commission: { $first: "$commission" },
+                    grandTotal: { $first: "$grandTotal" },
+                    _author: { $first: "$_author" },
+                    _retailer: { $first: "$_retailer" }
+                }
+            }
+        ])
         if (salesOrder) {
+
+
             return res.status(200).send(salesOrder);
         }
 
@@ -69,10 +141,7 @@ router.post('/create', authenticate, async (req, res) => {
             _author: req.driver._id,
             _retailer: req.body._retailer,
             orderDate: req.body.orderDate,
-            itemCode: req.body.itemCode,
-            itemType: req.body.itemType,
-            itemSubType: req.body.itemSubType,
-            itemName: req.body.itemName,
+            _orderProduct: req.body._orderProduct,
             quantity: req.body.quantity,
             unitPrice: req.body.unitPrice,
             tax: req.body.tax,
@@ -105,10 +174,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
         const patchSalesOrder = {
             orderDate: req.body.orderDate,
-            itemCode: req.body.itemCode,
-            itemType: req.body.itemType,
-            itemSubType: req.body.itemSubType,
-            itemName: req.body.itemName,
+            _product: req.body._product,
             quantity: req.body.quantity,
             unitPrice: req.body.unitPrice,
             tax: req.body.tax,
@@ -137,7 +203,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
         return res.status(200).send(salesOrder);
     } catch (e) {
-        console.log(e);
+
         return res.status(400).send({ message: 'Something went wrong, Couldn\'t Update Sales Order' })
     }
 })

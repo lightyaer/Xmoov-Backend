@@ -36,5 +36,6 @@ var ProductSchema = new mongoose.Schema({
 let Product = mongoose.model('Product', ProductSchema);
 
 module.exports = {
-    Product
+    Product,
+    ProductSchema
 }

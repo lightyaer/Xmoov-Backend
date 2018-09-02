@@ -13,16 +13,22 @@ router.post('/products/uploadCSV', async (req, res) => {
         // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
 
         let sampleFile = req.files.sampleFile;
+        if (!sampleFile) {
+            res.status(400).send({ message: " No File Received" });
+        }
+
+
         let name = 'products - ' + new Date().getTime();
 
         // Use the mv() method to place the file somewhere on your server
         await sampleFile.mv(__dirname + '/uploads/' + name);
         let data = await parseCSV(__dirname + '/uploads/' + name, ['barcode', 'SKU', 'nameEn', 'nameAr', 'cost', 'price']);
         let result = await Product.insertMany(data);
-        res.status(200).send(result);
+
+        res.status(200).send({ message: "File Successfully Inserted to DB" });
 
     } catch (error) {
-        console.log(error);
+
         res.status(400).send();
     }
 

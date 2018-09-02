@@ -40,10 +40,7 @@ router.post('/create', authenticate, async (req, res) => {
         const purchaseOrder = new PurchaseOrder({
             _author: req.driver._id,
             _salesOrder: req.body._salesOrder,
-            itemCode: req.body.itemCode,
-            itemType: req.body.itemType,
-            itemSubType: req.body.itemSubType,
-            itemName: req.body.itemName,
+            _product: req.body._product,
             remarks: req.body.remarks,
             quantity: req.body.quantity,
             unitPrice: req.body.unitPrice,
@@ -90,10 +87,7 @@ router.patch('/:id', authenticate, async (req, res) => {
             return res.status(404).send({ message: "Purchase Order ID is not valid" });
         }
         const patchPurchaseOrder = {
-            itemCode: req.body.itemCode,
-            itemType: req.body.itemType,
-            itemSubType: req.body.itemSubType,
-            itemName: req.body.itemName,
+            _product: req.body._product,
             remarks: req.body.remarks,
             quantity: req.body.quantity,
             unitPrice: req.body.unitPrice,

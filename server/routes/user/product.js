@@ -23,6 +23,22 @@ router.get('/all', authenticate, async (req, res) => {
 
 });
 
+router.get('/ids', authenticate, async (req, res) => {
+    try {
+        let ids = req.query.ids.split(',');
+        for (let id of ids) {
+            if (!ObjectID.isValid(id)) {
+                res.status(400).send();
+            }
+        }
+        let products = await Product.find({ _id: { $in: ids } })
+
+        res.status(200).send(products);
+    } catch (error) {
+        res.status(400).send();
+    }
+})
+
 router.get('/:id', authenticate, async (req, res) => {
 
     try {

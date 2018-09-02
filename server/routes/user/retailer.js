@@ -33,6 +33,7 @@ router.post('/create', authenticate, async (req, res) => {
         const result = await retailer.save();
         return res.status(200).send(result);
     } catch (e) {
+        console.log(e);
         return res.status(400).send({ message: 'Couldn\'t save the Retailer' })
     }
 })
@@ -41,7 +42,7 @@ router.post('/create', authenticate, async (req, res) => {
 router.get('/all', authenticate, async (req, res) => {
 
     let name = req.query.RetailerName;
-  
+
     try {
         const retailers = await Retailer.find({ _author: req.driver._id, name: new RegExp(name, "i") })
         if (!retailers) {
