@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 
-var SalesOrderProductSchema = new mongoose.Schema({
+var ProductWrapperSchema = new mongoose.Schema({
     _product: {
         type: mongoose.Schema.Types.ObjectId,
         required: true
@@ -13,5 +13,5 @@ var SalesOrderProductSchema = new mongoose.Schema({
 });
 
 module.exports = {
-    SalesOrderProductSchema
+    ProductWrapperSchema
 }

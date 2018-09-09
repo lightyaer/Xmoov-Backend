@@ -13,9 +13,23 @@ router.get('/all', authenticate, async (req, res) => {
 
     try {
         let name = req.query.name;
-        let products = await Product.find({
-            nameEn: new RegExp(name, "i")
-        });
+        let lang = req.query.lang;
+        let products;
+        if (lang === 'en') {
+            products = await Product.find({
+                nameEn: new RegExp(name, "i")
+            });
+        }
+
+        if (lang === 'ar') {
+            products = await Product.find({
+                nameAr: new RegExp(name, 'i')
+            });
+        }
+        if (!products) {
+            throw new Error("Product doesn't exist or improper Language chosen");
+        }
+
         res.status(200).send(products);
     } catch (err) {
         res.status(400).send();

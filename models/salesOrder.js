@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const { SalesOrderProductSchema } = require('./salesOrderProducts');
+const { ProductWrapperSchema } = require('./productsWrapper');
 
 var SalesOrderSchema = new mongoose.Schema({
     _author: {
@@ -39,7 +39,7 @@ var SalesOrderSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Please enter the Order Date'],
     },
-    _orderProduct: [SalesOrderProductSchema],
+    _orderProduct: [ProductWrapperSchema],
     remarks: {
         type: String
     },

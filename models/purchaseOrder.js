@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-
+const { ProductWrapperSchema } = require('../models/productsWrapper');
 const purchaseOrderSchema = new mongoose.Schema({
 
     _author: {
@@ -11,17 +11,12 @@ const purchaseOrderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true
     },
-    _product: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: [true, 'Please select a product'],
-        ref: 'Product ID'
-    },
+    _orderProduct: ProductWrapperSchema,
     remarks: {
         type: String
     },
-    quantity: {
-        type: Number,
-        required: [true, 'Please enter the Quantity']
+    remarks: {
+        type: String
     },
     unitPrice: {
         type: Number,

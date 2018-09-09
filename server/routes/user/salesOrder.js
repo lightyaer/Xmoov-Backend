@@ -122,9 +122,7 @@ router.get('/:id', authenticate, async (req, res) => {
             }
         ])
         if (salesOrder) {
-
-
-            return res.status(200).send(salesOrder);
+            return res.status(200).send(salesOrder[0]);
         }
 
         return res.status(400).send({ message: 'Sales Order not found.' });

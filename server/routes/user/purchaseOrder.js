@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const _ = require('lodash');
+const mongoose = require('mongoose');
 const cors = require('cors');
 
 
@@ -12,17 +13,33 @@ const { PurchaseOrder } = require('../../../models/purchaseOrder');
 
 router.use(cors());
 
+//GET ALL PURCHASE ORDERS 
 router.get('/all', authenticate, async (req, res) => {
 
     try {
 
-        let name = req.query.name;
 
-        const result = await PurchaseOrder.find(
+
+        const result = await PurchaseOrder.aggregate([
             {
-                _author: req.driver._id,
-                itemName: new RegExp(name, "i")
-            });
+                $match: {
+                    _author: req.driver._id
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_orderProduct._product',
+                    foreignField: '_id',
+                    as: 'product'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$product'
+                }
+            }
+        ]);
         if (!result) {
             return res.status(400).send({ message: "No Purchase Order Created" });
         }
@@ -34,15 +51,15 @@ router.get('/all', authenticate, async (req, res) => {
     }
 });
 
+//CREATE PURCHASE ORDER
 router.post('/create', authenticate, async (req, res) => {
 
     try {
         const purchaseOrder = new PurchaseOrder({
             _author: req.driver._id,
             _salesOrder: req.body._salesOrder,
-            _product: req.body._product,
+            _orderProduct: req.body._orderProduct,
             remarks: req.body.remarks,
-            quantity: req.body.quantity,
             unitPrice: req.body.unitPrice,
             tax: req.body.tax,
             discount: req.body.discount,
@@ -57,6 +74,7 @@ router.post('/create', authenticate, async (req, res) => {
 
 });
 
+//DELETE PURCHASE ORDER BY ID
 router.delete('/:id', authenticate, async (req, res) => {
 
     try {
@@ -87,9 +105,9 @@ router.patch('/:id', authenticate, async (req, res) => {
             return res.status(404).send({ message: "Purchase Order ID is not valid" });
         }
         const patchPurchaseOrder = {
-            _product: req.body._product,
+            _salesOrder: req.body._salesOrder,
             remarks: req.body.remarks,
-            quantity: req.body.quantity,
+            _orderProduct: req.body._orderProduct,
             unitPrice: req.body.unitPrice,
             tax: req.body.tax,
             discount: req.body.discount,
@@ -120,6 +138,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
 });
 
+//GET PURCHASE ORDER BY ID
 router.get('/:id', authenticate, async (req, res) => {
     try {
         let id = req.params.id;
@@ -127,16 +146,35 @@ router.get('/:id', authenticate, async (req, res) => {
 
             return res.status(404).send({ message: "Invalid Purchase Order ID" });
         }
-
-        const result = await PurchaseOrder.findOne({ _id: id, _author: req.driver._id });
-        if (!result) {
+        const purchaseOrder = await PurchaseOrder.aggregate([
+            {
+                $match: {
+                    _id: mongoose.Types.ObjectId(id),
+                    _author: mongoose.Types.ObjectId(req.driver._id)
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_orderProduct._product',
+                    foreignField: '_id',
+                    as: 'product'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$product'
+                }
+            }
+        ]);
+        if (!purchaseOrder) {
             return res.status(400).send({ message: "Purchase Order Not Found" });
-
         }
 
-        return res.status(200).send(result);
+        return res.status(200).send(purchaseOrder[0]);
 
     } catch (error) {
+        console.log(error);
         return res.status(400).send({ message: "Couldn't get Purchase Order" });
     }
 })
