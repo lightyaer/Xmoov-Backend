@@ -15,12 +15,13 @@ router.use(cors());
 router.get('/all', authenticate, async (req, res) => {
 
     try {
-        console.log(req.driver._id.toString());
-        let stageKey, stageValue, orderDate;
+
+        let stageKey, stageValue, orderDate, name;
         stageKey = req.query.stageKey;
         stageValue = req.query.stageValue === 'true' ? true : false;
         stageKey = "orderStatus." + stageKey;
         orderDate = Number(req.query.orderDate);
+        name = req.query.name;
 
         const salesOrders = await SalesOrder.aggregate([
             {
@@ -44,10 +45,25 @@ router.get('/all', authenticate, async (req, res) => {
                 }
             },
             {
+                $unwind: {
+                    path: "$productObjects"
+                }
+            },
+            {
+                $match: {
+                    "productObjects.nameEn": {
+                        $regex: name,
+                        $options: 'i'
+                    }
+                }
+            },
+            {
                 $group: {
                     _id: "$_id",
                     productObjects: {
-                        $push: "$productObjects"
+                        $push: {
+                            $mergeObjects: ['$_orderProduct', '$productObjects']
+                        }
                     },
                     orderDate: { $first: "$orderDate" },
                     orderStatus: { $first: "$orderStatus" },
@@ -103,10 +119,17 @@ router.get('/:id', authenticate, async (req, res) => {
                 }
             },
             {
+                $unwind: {
+                    path: '$productObjects'
+                }
+            },
+            {
                 $group: {
                     _id: "$_id",
                     productObjects: {
-                        $push: "$productObjects"
+                        $push: {
+                            $mergeObjects: ['$_orderProduct', '$productObjects']
+                        }
                     },
                     orderDate: { $first: "$orderDate" },
                     orderStatus: { $first: "$orderStatus" },
@@ -134,14 +157,23 @@ router.get('/:id', authenticate, async (req, res) => {
 
 //SAVE SALES ORDER
 router.post('/create', authenticate, async (req, res) => {
+
+
     try {
+        let products = [];
+        for (let item of req.body.productObjects) {
+            products.push({
+                _product: item._id,
+                quantity: parseInt(item.quantity, 10)
+            })
+        }
+
+        console.log(JSON.stringify(products));
         const salesOrder = new SalesOrder({
             _author: req.driver._id,
             _retailer: req.body._retailer,
-            orderDate: req.body.orderDate,
-            _orderProduct: req.body._orderProduct,
-            quantity: req.body.quantity,
-            unitPrice: req.body.unitPrice,
+            orderDate: parseInt(req.body.orderDate, 10),
+            _orderProduct: products,
             tax: req.body.tax,
             handling: req.body.handling,
             commission: req.body.commission,
@@ -155,14 +187,13 @@ router.post('/create', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (e) {
-        console.log(e);
+
         return res.status(400).send({ message: 'couldn\'t save Sales Order' })
     }
 })
 
 //UPDATE SALES ORDER
 router.patch('/:id', authenticate, async (req, res) => {
-
     try {
 
         let id = req.params.id;
@@ -171,10 +202,9 @@ router.patch('/:id', authenticate, async (req, res) => {
         }
 
         const patchSalesOrder = {
-            orderDate: req.body.orderDate,
-            _product: req.body._product,
-            quantity: req.body.quantity,
-            unitPrice: req.body.unitPrice,
+            _retailer: req.body._retailer,
+            orderDate: parseInt(req.body.orderDate, 10),
+            _orderProduct: req.body.productObjects,
             tax: req.body.tax,
             handling: req.body.handling,
             commission: req.body.commission,
@@ -187,8 +217,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         const salesOrder = await SalesOrder.findOneAndUpdate(
             {
                 _id: id,
-                _author: req.driver._id,
-                _retailer: req.body._retailer
+                _author: req.driver._id
             },
             {
                 $set: patchSalesOrder
@@ -201,7 +230,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
         return res.status(200).send(salesOrder);
     } catch (e) {
-
+        console.log(e);
         return res.status(400).send({ message: 'Something went wrong, Couldn\'t Update Sales Order' })
     }
 })
@@ -275,7 +304,58 @@ router.get('/retailer/:id', authenticate, async (req, res) => {
             return res.status(400).send({ message: 'Retailer ID is Invalid' });
         }
 
-        const salesOrders = await SalesOrder.find({ _retailer: id, _author: req.driver._id });
+        const salesOrders = await SalesOrder.aggregate([
+            {
+                $match: {
+                    _author: mongoose.Types.ObjectId(req.driver.id.toString()),
+                    _retailer: mongoose.Types.ObjectId(id)
+                }
+            },
+            {
+                $unwind: {
+                    path: "$_orderProduct"
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_orderProduct._product',
+                    foreignField: '_id',
+                    as: 'productObjects'
+                }
+            },
+            {
+                $unwind: {
+                    path: "$productObjects"
+                }
+            },
+            {
+                $match: {
+                    "productObjects.nameEn": {
+                        $regex: name,
+                        $options: 'i'
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    productObjects: {
+                        $push: "$productObjects"
+                    },
+                    orderDate: { $first: "$orderDate" },
+                    orderStatus: { $first: "$orderStatus" },
+                    handling: { $first: "$handling" },
+                    discount: { $first: "$discount" },
+                    tax: { $first: "$tax" },
+                    total: { $first: "$total" },
+                    commission: { $first: "$commission" },
+                    grandTotal: { $first: "$grandTotal" },
+                    _author: { $first: "$_author" },
+                    _retailer: { $first: "$_retailer" }
+                }
+            }
+        ]);
         if (!salesOrders) {
             return res.status(400).send({ message: 'Sales Order by RetailerID doesn\'t exist' })
         }
