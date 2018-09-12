@@ -11,16 +11,10 @@ const purchaseOrderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true
     },
-    _orderProduct: ProductWrapperSchema,
+    _orderProducts: [ProductWrapperSchema],
     remarks: {
-        type: String
-    },
-    remarks: {
-        type: String
-    },
-    unitPrice: {
-        type: Number,
-        default: 1
+        type: String,
+        required: [true, "Please enter some Remarks"]
     },
     tax: {
         type: Number,
@@ -31,6 +25,10 @@ const purchaseOrderSchema = new mongoose.Schema({
         default: 0
     },
     total: {
+        type: Number,
+        default: 0
+    },
+    grandTotal: {
         type: Number,
         default: 0
     }

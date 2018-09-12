@@ -6,7 +6,6 @@ const mongoose = require('mongoose');
 const { authenticate } = require('../../middleware/authenticate');
 const { SalesOrder } = require('../../../models/salesOrder');
 const { PurchaseOrder } = require('../../../models/purchaseOrder');
-const { Product } = require('../../../models/products');
 router.use(cors());
 
 //#region SALES ORDER
@@ -21,7 +20,7 @@ router.get('/all', authenticate, async (req, res) => {
         stageValue = req.query.stageValue === 'true' ? true : false;
         stageKey = "orderStatus." + stageKey;
         orderDate = Number(req.query.orderDate);
-        name = req.query.name;
+        name = _.isString(req.query.name) ? req.query.name : "";
 
         const salesOrders = await SalesOrder.aggregate([
             {
@@ -74,7 +73,8 @@ router.get('/all', authenticate, async (req, res) => {
                     commission: { $first: "$commission" },
                     grandTotal: { $first: "$grandTotal" },
                     _author: { $first: "$_author" },
-                    _retailer: { $first: "$_retailer" }
+                    _retailer: { $first: "$_retailer" },
+                    remarks: { $first: "$remarks" }
                 }
             }
         ]);
@@ -83,7 +83,6 @@ router.get('/all', authenticate, async (req, res) => {
         }
         return res.status(200).send(salesOrders);
     } catch (e) {
-        console.log(e);
         return res.status(400).send({ message: 'Couldn\'t get a list of salesOrder' })
     }
 
@@ -140,7 +139,8 @@ router.get('/:id', authenticate, async (req, res) => {
                     commission: { $first: "$commission" },
                     grandTotal: { $first: "$grandTotal" },
                     _author: { $first: "$_author" },
-                    _retailer: { $first: "$_retailer" }
+                    _retailer: { $first: "$_retailer" },
+                    remarks: { $first: "$remarks" }
                 }
             }
         ])
@@ -175,6 +175,7 @@ router.post('/create', authenticate, async (req, res) => {
             orderDate: parseInt(req.body.orderDate, 10),
             _orderProduct: products,
             tax: req.body.tax,
+            remarks: req.body.remarks,
             handling: req.body.handling,
             commission: req.body.commission,
             discount: req.body.discount,
@@ -206,6 +207,7 @@ router.patch('/:id', authenticate, async (req, res) => {
             orderDate: parseInt(req.body.orderDate, 10),
             _orderProduct: req.body.productObjects,
             tax: req.body.tax,
+            remarks: req.body.remarks,
             handling: req.body.handling,
             commission: req.body.commission,
             discount: req.body.discount,

@@ -41,7 +41,8 @@ var SalesOrderSchema = new mongoose.Schema({
     },
     _orderProduct: [ProductWrapperSchema],
     remarks: {
-        type: String
+        type: String,
+        required: [true, "Please enter some Remarks"]
     },
     tax: {
         type: Number,
