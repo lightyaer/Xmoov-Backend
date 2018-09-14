@@ -10,6 +10,7 @@ const { authenticate } = require('../../middleware/authenticate');
 
 const { PurchaseOrder } = require('../../../models/purchaseOrder');
 
+const { SalesOrder } = require('../../../models/salesOrder');
 
 router.use(cors());
 
@@ -99,16 +100,39 @@ router.get('/:id', authenticate, async (req, res) => {
                 }
             },
             {
+                $unwind: {
+                    path: "$_orderProducts",
+
+                }
+            },
+            {
                 $lookup: {
                     from: 'products',
-                    localField: '_orderProduct._product',
+                    localField: '_orderProducts._product',
                     foreignField: '_id',
-                    as: 'product'
+                    as: 'products'
                 }
             },
             {
                 $unwind: {
-                    path: '$product'
+                    path: "$products"
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    productObjects: {
+                        $push: {
+                            $mergeObjects: ['$_orderProducts', '$products']
+                        }
+                    },
+                    discount: { $first: "$discount" },
+                    tax: { $first: "$tax" },
+                    total: { $first: "$total" },
+                    grandTotal: { $first: "$grandTotal" },
+                    _author: { $first: "$_author" },
+                    _salesOrder: { $first: "$_salesOrder" },
+                    remarks: { $first: "$remarks" }
                 }
             }
         ]);
@@ -147,6 +171,72 @@ router.post('/create', authenticate, async (req, res) => {
     }
 
 });
+//GET REMAINDER QUANTITIES
+router.get('/getQuantities/:id', authenticate, async (req, res) => {
+    try {
+        let id = req.params.id;
+        if (!ObjectID.isValid(id)) {
+            return res.status(404).send({ message: 'Invalid Sales Order ID' });
+        }
+
+        const quantities = await PurchaseOrder.aggregate([
+            {
+                $match: {
+                    _id: id
+                }
+            },
+            {
+                $unwind: {
+                    path: "$_orderProducts"
+                }
+            },
+            {
+                $lookup: {
+                    from: 'salesorders',
+                    localField: '_salesOrder',
+                    foreignField: '_id',
+                    as: 'salesOrder'
+                }
+            },
+            {
+                $unwind: {
+                    path: "$salesOrder"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$salesOrder._orderProduct"
+                }
+            },
+            {
+                $project: {
+                    soProducts: "$salesOrder._orderProduct",
+                    _orderProducts: "$_orderProducts",
+                    idEq: { $eq: ["$salesOrder._orderProduct._id", "$_orderProducts._id"] }
+                }
+            },
+            {
+                $match: {
+                    idEq: true
+                }
+            },
+            {
+                $project: {
+                    _id: "$_id",
+                    quantity: {
+                        $subtract: ["$soProducts.quantity", "$_orderProducts.quantity"]
+                    }
+                }
+            }
+        ])
+        res.status(200).send({ quantities });
+
+    } catch (error) {
+        console.log(error);
+        res.status(400).send();
+    }
+
+})
 
 //DELETE PURCHASE ORDER BY ID
 router.delete('/:id', authenticate, async (req, res) => {
@@ -206,7 +296,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (error) {
-
+        console.log(error);
         return res.status(400).send({ message: "Couldn't Update Purchase Order" })
     }
 
@@ -215,3 +305,6 @@ router.patch('/:id', authenticate, async (req, res) => {
 
 
 module.exports = router
+
+
+

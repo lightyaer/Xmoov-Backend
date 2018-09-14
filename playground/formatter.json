@@ -1,0 +1,21 @@
+
+{
+    "_id": "<<obj_id>>",
+    "_orderProducts": [
+        {
+            "_id": "<<_id>>",
+            "_product": "<<_id>>",
+            "quantity": 6
+        },
+        {
+            "_id": "<<_id>>",
+            "_product": "<<_id>>",
+            "quantity": 16
+        },
+        {
+            "_id": "<<_id>>",
+            "_product": "<<_id>>",
+            "quantity": 12
+        }
+    ]
+}
