@@ -168,7 +168,7 @@ router.post('/create', authenticate, async (req, res) => {
             })
         }
 
-        console.log(JSON.stringify(products));
+        
         const salesOrder = new SalesOrder({
             _author: req.driver._id,
             _retailer: req.body._retailer,
@@ -188,7 +188,7 @@ router.post('/create', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (e) {
-        console.log(e);
+        
         return res.status(400).send({ message: 'couldn\'t save Sales Order' })
     }
 })
@@ -232,7 +232,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
         return res.status(200).send(salesOrder);
     } catch (e) {
-        console.log(e);
+        
         return res.status(400).send({ message: 'Something went wrong, Couldn\'t Update Sales Order' })
     }
 })

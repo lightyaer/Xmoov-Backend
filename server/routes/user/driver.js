@@ -69,7 +69,7 @@ router.post('/otp', cors(corsOptions), async (req, res) => {
             res.status(400).send({ message: 'OTP didn\'t Match' })
         }
     } catch (e) {
-        console.log(e);
+        
         res.status(400).send({ message: 'Couldn\'t Sign Up' })
     }
 })
@@ -95,7 +95,7 @@ router.post('/login', cors(corsOptions), async (req, res) => {
             res.status(401).send({ message: 'Subscription has ended, Kindly renew the Service' });
         }
     } catch (e) {
-        console.log(e);
+        
         return res.status(400).send({ message: e.message });
     }
 })

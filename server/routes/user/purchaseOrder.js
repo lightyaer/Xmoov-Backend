@@ -79,7 +79,7 @@ router.get('/all', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (error) {
-        console.log(error);
+        
         return res.status(400).send({ message: "Couldn't get all Purchase Orders" });
     }
 });
@@ -143,7 +143,7 @@ router.get('/:id', authenticate, async (req, res) => {
         return res.status(200).send(purchaseOrder[0]);
 
     } catch (error) {
-        console.log(error);
+        
         return res.status(400).send({ message: "Couldn't get Purchase Order" });
     }
 })
@@ -166,7 +166,7 @@ router.post('/create', authenticate, async (req, res) => {
         const result = await purchaseOrder.save();
         return res.status(200).send(result);
     } catch (error) {
-        console.log(error);
+        
         return res.status(400).send({ message: 'Couldn\'t save the Purchase Order' });
     }
 
@@ -242,7 +242,7 @@ router.get('/getQuantities/:id', authenticate, async (req, res) => {
         res.status(200).send(quantities);
 
     } catch (error) {
-        console.log(error);
+        
         res.status(400).send();
     }
 
@@ -264,7 +264,7 @@ router.delete('/:id', authenticate, async (req, res) => {
         return res.status(200).send(purchaseOrder)
 
     } catch (error) {
-        console.log(error);
+        
         return res.status(400).send({ message: 'Couldn\'t delete the Purchase Order' });
     }
 
@@ -306,7 +306,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (error) {
-        console.log(error);
+        
         return res.status(400).send({ message: "Couldn't Update Purchase Order" })
     }
 

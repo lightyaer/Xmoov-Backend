@@ -33,7 +33,7 @@ router.post('/create', authenticate, async (req, res) => {
         const result = await retailer.save();
         return res.status(200).send(result);
     } catch (e) {
-        console.log(e);
+        
         return res.status(400).send({ message: 'Couldn\'t save the Retailer' })
     }
 })
@@ -133,7 +133,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         }
         return res.status(200).send(retailer);
     } catch (e) {
-        console.log(e);
+        
         return res.status(400).send({ message: 'Something went wrong, Couldn\'t Update Retailer' })
     }
 })
