@@ -5,14 +5,16 @@ var authenticate = (req, res, next) => {
 
 
     Driver.findByToken(token).then((driver) => {
+        console.log(driver);
         if (!driver) {
+
             return Promise.reject();
         }
         req.driver = driver;
         req.token = token;
         next();
     }).catch(() => {
-       
+
         res.status(401).send({ message: "Please Login" });
     })
 };
