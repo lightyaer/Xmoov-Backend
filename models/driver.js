@@ -91,8 +91,8 @@ DriverSchema.statics.findByToken = function (token) {
     var Driver = this;
     var decoded;
     try {
-       
-        decoded = jwt.verify(token,"sKJHDfiugasdjbf2740273kjsdbhfjSKJDf");
+
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
         return Driver.findOne({
             '_id': decoded._id,
             'tokens.token': token,
@@ -100,7 +100,7 @@ DriverSchema.statics.findByToken = function (token) {
         });
     }
     catch (e) {
-   
+
         return Promise.reject();
     }
 }
