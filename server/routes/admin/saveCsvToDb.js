@@ -19,7 +19,7 @@ router.post('/products/uploadCSV', async (req, res) => {
 
 
         let name = 'products - ' + new Date().getTime();
-        let path = __dirname + '/uploads/' + name;
+        let path = __dirname + '../../assets/uploads/' + name;
         
         // Use the mv() method to place the file somewhere on your server
         await sampleFile.mv(path);
