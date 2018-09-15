@@ -5,11 +5,12 @@ var authenticate = (req, res, next) => {
 
 
     Driver.findByToken(token).then((driver) => {
-        console.log(driver);
+        
         if (!driver) {
 
             return Promise.reject();
         }
+        console.log(driver);
         req.driver = driver;
         req.token = token;
         next();
