@@ -108,6 +108,7 @@ router.patch('/:id', authenticate, async (req, res) => {
             postalCode: req.body.postalCode,
             phoneNo: req.body.phoneNo,
             email: req.body.email,
+            shipToSame: req.body.shipToSame,
             shipName: req.body.shipName,
             shipCompany: req.body.shipCompany,
             shipAddress: req.body.shipAddress,

@@ -181,16 +181,6 @@ router.get('/getQuantities/:id', authenticate, async (req, res) => {
 
         const quantities = await PurchaseOrder.aggregate([
             {
-                $match: {
-                    _id: id
-                }
-            },
-            {
-                $unwind: {
-                    path: "$_orderProducts"
-                }
-            },
-            {
                 $lookup: {
                     from: 'salesorders',
                     localField: '_salesOrder',
@@ -200,7 +190,17 @@ router.get('/getQuantities/:id', authenticate, async (req, res) => {
             },
             {
                 $unwind: {
+                    path: "$_orderProducts"
+                }
+            },
+            {
+                $unwind: {
                     path: "$salesOrder"
+                }
+            },
+            {
+                $match: {
+                    "salesOrder._id": mongoose.Types.ObjectId(id.toString())
                 }
             },
             {
@@ -212,7 +212,7 @@ router.get('/getQuantities/:id', authenticate, async (req, res) => {
                 $project: {
                     soProducts: "$salesOrder._orderProduct",
                     _orderProducts: "$_orderProducts",
-                    idEq: { $eq: ["$salesOrder._orderProduct._id", "$_orderProducts._id"] }
+                    idEq: { $eq: ["$salesOrder._orderProduct._product", "$_orderProducts._product"] }
                 }
             },
             {
@@ -221,15 +221,25 @@ router.get('/getQuantities/:id', authenticate, async (req, res) => {
                 }
             },
             {
+                $group: {
+                    _id: "$soProducts._product",
+                    soProducts: { $first: "$soProducts" },
+                    _product: { $first: "$soProducts._product" },
+                    quantities: { $sum: "$_orderProducts.quantity" }
+                }
+            },
+            {
                 $project: {
                     _id: "$_id",
+                    soProducts: "$soProducts",
+                    _product: "$_product",
                     quantity: {
-                        $subtract: ["$soProducts.quantity", "$_orderProducts.quantity"]
+                        $subtract: ["$soProducts.quantity", "$quantities"]
                     }
                 }
             }
         ])
-        res.status(200).send({ quantities });
+        res.status(200).send(quantities);
 
     } catch (error) {
         console.log(error);

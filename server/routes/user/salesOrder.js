@@ -188,7 +188,7 @@ router.post('/create', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (e) {
-
+        console.log(e);
         return res.status(400).send({ message: 'couldn\'t save Sales Order' })
     }
 })

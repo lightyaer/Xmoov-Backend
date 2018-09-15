@@ -19,16 +19,17 @@ router.post('/products/uploadCSV', async (req, res) => {
 
 
         let name = 'products - ' + new Date().getTime();
-
+        let path = __dirname + '/uploads/' + name;
+        
         // Use the mv() method to place the file somewhere on your server
-        await sampleFile.mv(__dirname + '/uploads/' + name);
-        let data = await parseCSV(__dirname + '/uploads/' + name, ['barcode', 'SKU', 'nameEn', 'nameAr', 'cost', 'price']);
+        await sampleFile.mv(path);
+        let data = await parseCSV(path, ['barcode', 'SKU', 'nameEn', 'nameAr', 'cost', 'price']);
         let result = await Product.insertMany(data);
 
         res.status(200).send({ message: "File Successfully Inserted to DB" });
 
     } catch (error) {
-
+        console.log(error);
         res.status(400).send();
     }
 
