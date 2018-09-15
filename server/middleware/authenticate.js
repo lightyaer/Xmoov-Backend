@@ -14,8 +14,8 @@ var authenticate = (req, res, next) => {
         req.driver = driver;
         req.token = token;
         next();
-    }).catch(() => {
-
+    }).catch((e) => {
+        console.log(e);
         res.status(401).send({ message: "Please Login" });
     })
 };
