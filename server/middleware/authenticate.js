@@ -2,10 +2,10 @@ var { Driver } = require('../../models/driver');
 
 var authenticate = (req, res, next) => {
     var token = req.header('x-auth');
-
+    console.log(token);
 
     Driver.findByToken(token).then((driver) => {
-        
+
         if (!driver) {
 
             return Promise.reject();
