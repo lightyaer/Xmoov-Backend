@@ -19,7 +19,7 @@ router.get('/all', authenticate, async (req, res) => {
         stageKey = req.query.stageKey;
         stageValue = req.query.stageValue === 'true' ? true : false;
         stageKey = "orderStatus." + stageKey;
-        orderDate = Number(req.query.orderDate);
+        orderDate = req.query.orderDate;
         name = _.isString(req.query.name) ? req.query.name : "";
 
         const salesOrders = await SalesOrder.aggregate([
@@ -27,30 +27,30 @@ router.get('/all', authenticate, async (req, res) => {
                 $match: {
                     _author: mongoose.Types.ObjectId(req.driver.id.toString()),
                     [stageKey]: stageValue,
-                    orderDate: { $lte: orderDate }
+                    orderDate: { $lte: new Date(orderDate) }
                 }
             },
             {
                 $unwind: {
-                    path: "$_orderProduct"
+                    path: "$_orderProducts"
                 }
             },
             {
                 $lookup: {
                     from: 'products',
-                    localField: '_orderProduct._product',
+                    localField: '_orderProducts._product',
                     foreignField: '_id',
-                    as: 'productObjects'
+                    as: 'products'
                 }
             },
             {
                 $unwind: {
-                    path: "$productObjects"
+                    path: "$products"
                 }
             },
             {
                 $match: {
-                    "productObjects.nameEn": {
+                    "products.nameEn": {
                         $regex: name,
                         $options: 'i'
                     }
@@ -59,9 +59,9 @@ router.get('/all', authenticate, async (req, res) => {
             {
                 $group: {
                     _id: "$_id",
-                    productObjects: {
+                    products: {
                         $push: {
-                            $mergeObjects: ['$_orderProduct', '$productObjects']
+                            $mergeObjects: ['$_orderProducts', '$products']
                         }
                     },
                     orderDate: { $first: "$orderDate" },
@@ -106,28 +106,28 @@ router.get('/:id', authenticate, async (req, res) => {
             },
             {
                 $unwind: {
-                    path: "$_orderProduct"
+                    path: "$_orderProducts"
                 }
             },
             {
                 $lookup: {
                     from: 'products',
-                    localField: '_orderProduct._product',
+                    localField: '_orderProducts._product',
                     foreignField: '_id',
-                    as: 'productObjects'
+                    as: 'products'
                 }
             },
             {
                 $unwind: {
-                    path: '$productObjects'
+                    path: '$products'
                 }
             },
             {
                 $group: {
                     _id: "$_id",
-                    productObjects: {
+                    products: {
                         $push: {
-                            $mergeObjects: ['$_orderProduct', '$productObjects']
+                            $mergeObjects: ['$_orderProducts', '$products']
                         }
                     },
                     orderDate: { $first: "$orderDate" },
@@ -157,23 +157,12 @@ router.get('/:id', authenticate, async (req, res) => {
 
 //SAVE SALES ORDER
 router.post('/create', authenticate, async (req, res) => {
-
-
     try {
-        let products = [];
-        for (let item of req.body.productObjects) {
-            products.push({
-                _product: item._id,
-                quantity: parseInt(item.quantity, 10)
-            })
-        }
-
-        
         const salesOrder = new SalesOrder({
             _author: req.driver._id,
             _retailer: req.body._retailer,
             orderDate: parseInt(req.body.orderDate, 10),
-            _orderProduct: products,
+            _orderProducts: req.body._orderProducts,
             tax: req.body.tax,
             remarks: req.body.remarks,
             handling: req.body.handling,
@@ -188,8 +177,17 @@ router.post('/create', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (e) {
-        
-        return res.status(400).send({ message: 'couldn\'t save Sales Order' })
+        console.log(JSON.stringify(e, undefined, 2))
+        if (e.errors) {
+            let errStr = "";
+            for (let err of Object.keys(e.errors)) {
+                errStr += e.errors[err].message + ',';
+            }
+            if (errStr.length > 0) {
+                return res.status(400).send({ message: errStr });
+            }
+        }
+        return res.status(400).send({ message: 'Couldn\'t save Sales Order' })
     }
 })
 
@@ -205,7 +203,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         const patchSalesOrder = {
             _retailer: req.body._retailer,
             orderDate: parseInt(req.body.orderDate, 10),
-            _orderProduct: req.body.productObjects,
+            _orderProducts: req.body._orderProducts,
             tax: req.body.tax,
             remarks: req.body.remarks,
             handling: req.body.handling,
@@ -232,7 +230,13 @@ router.patch('/:id', authenticate, async (req, res) => {
 
         return res.status(200).send(salesOrder);
     } catch (e) {
-        
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
         return res.status(400).send({ message: 'Something went wrong, Couldn\'t Update Sales Order' })
     }
 })
@@ -264,6 +268,13 @@ router.patch('/orderstatus/:id', authenticate, async (req, res) => {
 
 
     } catch (e) {
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
         return res.status(400).send({ message: 'Something went wrong, Couldn\'t Update Order Status' })
     }
 

@@ -10,7 +10,7 @@ var SalesOrderSchema = new mongoose.Schema({
     },
     _retailer: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
+        required: [true, "Please choose a retailer."],
         ref: 'Retailer ID'
     },
     orderStatus: {
@@ -36,25 +36,33 @@ var SalesOrderSchema = new mongoose.Schema({
         }
     },
     orderDate: {
-        type: Number,
-        required: [true, 'Please enter the Order Date'],
+        type: Date,
+        required: [true, 'Please enter the Order Date']
     },
-    _orderProduct: [ProductWrapperSchema],
+    _orderProducts: {
+        type: [ProductWrapperSchema],
+        validate: {
+            validator: function (v) {
+                return v.length === 0 ? false : true;
+            },
+            message: 'Please choose Product/s.'
+        }
+    },
     remarks: {
         type: String,
         required: [true, "Please enter some Remarks"]
     },
     tax: {
         type: Number,
-        default: 1
+        default: 0
     },
     handling: {
         type: Number,
-        default: 1
+        default: 0
     },
     commission: {
         type: Number,
-        default: 1
+        default: 0
     },
     discount: {
         type: Number,

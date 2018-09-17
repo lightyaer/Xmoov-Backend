@@ -8,7 +8,7 @@ var DriverSchema = new mongoose.Schema({
 
     name: {
         type: String,
-        minlength: 2,
+        minlength: 3,
         required: [true, 'Please enter your Name'],
         trim: true
     },
@@ -17,18 +17,23 @@ var DriverSchema = new mongoose.Schema({
         minlength: 10,
         required: [true, 'Please enter your Mobile No.'],
         trim: true,
-        // validate: {
-        //     validator: function (v) {
-        //         return /^(?:\+971|00971|0|\+91)?(?:50|51|52|55|56|2|3|4|6|7|9)\d{7}$/.test(v);
-        //     },
-        //     message: '{VALUE} is not a valid Mobile Number'
-        // }
+        validate: {
+            validator: function (v) {
+                return /^(\+?91|0)?[6789]\d{9}$/.test(v) || /^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/.test(v);
+            },
+            message: '{VALUE} is not a valid Mobile Number'
+        }
     },
     vehicleRegNo: {
         type: String,
         minlength: 13,
         required: [true, 'Please enter your Venicle Reg No.'],
-        trim: true
+        trim: true,
+        // validate: {
+        //     validator: function (v) {
+        //         return /^[A-Z]{2}[ -][0-9]{1,2}(?: [A-Z])?(?: [A-Z]*)? [0-9]{4}$/.test(v);
+        //     }
+        // }
     },
     address: {
         type: String,
@@ -54,9 +59,15 @@ var DriverSchema = new mongoose.Schema({
     otpAuth: {
         type: Boolean
     },
+    lang: {
+        type: String,
+        maxlength: 2,
+        default: 'en'
+    },
     subscribedOn: {
         type: Number,
-        required: true
+        required: true,
+        
     },
     tokens: [{
         access: {
@@ -74,7 +85,7 @@ var DriverSchema = new mongoose.Schema({
 DriverSchema.methods.toJSON = function () {
     var user = this;
     var userObject = user.toObject();
-    return _.pick(userObject, ['_id', 'email', 'address', 'vehicleRegNo', 'mobileNo', 'name', 'subscribedOn', 'otpAuth']);
+    return _.pick(userObject, ['_id', 'email', 'address', 'vehicleRegNo', 'mobileNo', 'name', 'subscribedOn', 'otpAuth','lang']);
 }
 
 DriverSchema.methods.generateAuthToken = function () {
@@ -91,7 +102,6 @@ DriverSchema.statics.findByToken = function (token) {
     var Driver = this;
     var decoded;
     try {
-
         decoded = jwt.verify(token, process.env.JWT_SECRET);
         return Driver.findOne({
             '_id': decoded._id,

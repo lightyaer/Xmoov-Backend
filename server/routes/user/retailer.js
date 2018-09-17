@@ -2,9 +2,7 @@ const router = require('express').Router();
 const _ = require('lodash');
 const cors = require('cors');
 const { ObjectID } = require('mongodb');
-
 const { authenticate } = require('../../middleware/authenticate');
-
 const { Retailer } = require('../../../models/retailer');
 
 router.use(cors());
@@ -33,7 +31,14 @@ router.post('/create', authenticate, async (req, res) => {
         const result = await retailer.save();
         return res.status(200).send(result);
     } catch (e) {
-        
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
+
         return res.status(400).send({ message: 'Couldn\'t save the Retailer' })
     }
 })
@@ -133,7 +138,14 @@ router.patch('/:id', authenticate, async (req, res) => {
         }
         return res.status(200).send(retailer);
     } catch (e) {
-        
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
+
         return res.status(400).send({ message: 'Something went wrong, Couldn\'t Update Retailer' })
     }
 })

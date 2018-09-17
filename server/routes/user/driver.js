@@ -36,20 +36,21 @@ router.post('/signup', async (req, res) => {
             nexmo.message.sendSms("XMOOVS", body.mobileNo, 'OTP for Signing up is ' + otp, { type: 'unicode' },
                 (err, responseData) => {
                     if (err) {
-
-                        res.status(400).send({ message: 'error in sending OTP' })
+                        return res.status(400).send({ message: 'error in sending OTP' })
                     }
                     if (responseData) {
-
-                        res.status(200).send({ message: 'OTP has been sent ' + otp });
+                        return res.status(200).send({ message: 'OTP has been sent ' + otp });
                     }
-
-
                 })
         }
-
     } catch (e) {
-
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
         res.status(400).send({ message: 'Couldn\'t send otp' })
     }
 })
@@ -69,14 +70,37 @@ router.post('/otp', cors(corsOptions), async (req, res) => {
             res.status(400).send({ message: 'OTP didn\'t Match' })
         }
     } catch (e) {
-        
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
         res.status(400).send({ message: 'Couldn\'t Sign Up' })
     }
 })
 
 //VERIFY DRIVER, GET DRIVER DETAILS
 router.get('/me', authenticate, async (req, res) => {
-    res.send(req.driver);
+
+    res.status(200).send(req.driver);
+})
+
+//SET LANGUAGE
+router.post('/lang', authenticate, async (req, res) => {
+    try {
+        let lang = req.body.lang;
+        lang = lang ? lang : 'en';
+        const driver = await Driver.findOneAndUpdate(
+            { _id: req.driver._id },
+            { $set: { lang: lang } },
+            { upsert: true, new: true }
+        )
+        return res.status(200).send(driver);
+    } catch (error) {
+        return res.status(400).send();
+    }
 })
 
 //LOGIN FOR DRIVER
@@ -95,7 +119,7 @@ router.post('/login', cors(corsOptions), async (req, res) => {
             res.status(401).send({ message: 'Subscription has ended, Kindly renew the Service' });
         }
     } catch (e) {
-        
+
         return res.status(400).send({ message: e.message });
     }
 })
@@ -116,9 +140,10 @@ router.post('/check', cors(corsOptions), async (req, res) => {
         const body = _.pick(req.body, ['email']);
         let driver = await Driver.findOne({ email: body.email });
         if (driver.tokens[0]) {
+
             res.status(200).header('x-auth', driver.tokens[0].token).send(driver);
         } else {
-            res.status(401).send({ message: 'Please Login' });
+            res.status(401).send({ message: 'Please Login to continue' });
         }
     } catch (e) {
         res.status(401).send({ message: 'Please Login to continue' });

@@ -2,15 +2,9 @@ const router = require('express').Router();
 const _ = require('lodash');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
-
 const { ObjectID } = require('mongodb');
-
 const { authenticate } = require('../../middleware/authenticate');
-
 const { PurchaseOrder } = require('../../../models/purchaseOrder');
-
-const { SalesOrder } = require('../../../models/salesOrder');
 
 router.use(cors());
 
@@ -18,7 +12,6 @@ router.use(cors());
 router.get('/all', authenticate, async (req, res) => {
 
     try {
-
         let name = _.isString(req.query.name) ? req.query.name : "";
         const result = await PurchaseOrder.aggregate([
             {
@@ -58,7 +51,7 @@ router.get('/all', authenticate, async (req, res) => {
                 $group: {
                     _id: "$_id",
                     _salesOrder: { $first: "$_salesOrder" },
-                    productObjects: {
+                    products: {
                         $push: {
                             $mergeObjects: ['$_orderProducts', '$products']
                         }
@@ -79,7 +72,7 @@ router.get('/all', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (error) {
-        
+
         return res.status(400).send({ message: "Couldn't get all Purchase Orders" });
     }
 });
@@ -143,7 +136,7 @@ router.get('/:id', authenticate, async (req, res) => {
         return res.status(200).send(purchaseOrder[0]);
 
     } catch (error) {
-        
+
         return res.status(400).send({ message: "Couldn't get Purchase Order" });
     }
 })
@@ -152,10 +145,11 @@ router.get('/:id', authenticate, async (req, res) => {
 router.post('/create', authenticate, async (req, res) => {
 
     try {
+
         const purchaseOrder = new PurchaseOrder({
             _author: req.driver._id,
             _salesOrder: req.body._salesOrder,
-            _orderProducts: req.body.productObjects,
+            _orderProducts: req.body._orderProducts,
             remarks: req.body.remarks,
             grandTotal: req.body.grandTotal,
             tax: req.body.tax,
@@ -165,12 +159,20 @@ router.post('/create', authenticate, async (req, res) => {
 
         const result = await purchaseOrder.save();
         return res.status(200).send(result);
-    } catch (error) {
-        
+    } catch (e) {
+        console.log(JSON.stringify(e, undefined, 2))
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
         return res.status(400).send({ message: 'Couldn\'t save the Purchase Order' });
     }
 
 });
+
 //GET REMAINDER QUANTITIES
 router.get('/getQuantities/:id', authenticate, async (req, res) => {
     try {
@@ -205,14 +207,14 @@ router.get('/getQuantities/:id', authenticate, async (req, res) => {
             },
             {
                 $unwind: {
-                    path: "$salesOrder._orderProduct"
+                    path: "$salesOrder._orderProducts"
                 }
             },
             {
                 $project: {
-                    soProducts: "$salesOrder._orderProduct",
+                    soProducts: "$salesOrder._orderProducts",
                     _orderProducts: "$_orderProducts",
-                    idEq: { $eq: ["$salesOrder._orderProduct._product", "$_orderProducts._product"] }
+                    idEq: { $eq: ["$salesOrder._orderProducts._product", "$_orderProducts._product"] }
                 }
             },
             {
@@ -242,7 +244,7 @@ router.get('/getQuantities/:id', authenticate, async (req, res) => {
         res.status(200).send(quantities);
 
     } catch (error) {
-        
+
         res.status(400).send();
     }
 
@@ -264,7 +266,7 @@ router.delete('/:id', authenticate, async (req, res) => {
         return res.status(200).send(purchaseOrder)
 
     } catch (error) {
-        
+
         return res.status(400).send({ message: 'Couldn\'t delete the Purchase Order' });
     }
 
@@ -281,7 +283,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         const patchPurchaseOrder = {
             _salesOrder: req.body._salesOrder,
             remarks: req.body.remarks,
-            _orderProducts: req.body.productObjects,
+            _orderProducts: req.body._orderProducts,
             tax: req.body.tax,
             discount: req.body.discount,
             grandTotal: req.body.grandTotal,
@@ -305,8 +307,14 @@ router.patch('/:id', authenticate, async (req, res) => {
         }
         return res.status(200).send(result);
 
-    } catch (error) {
-        
+    } catch (e) {
+        let errStr = "";
+        for (let err of Object.keys(e.errors)) {
+            errStr += e.errors[err].message + ',';
+        }
+        if (errStr.length > 0) {
+            return res.status(400).send({ message: errStr });
+        }
         return res.status(400).send({ message: "Couldn't Update Purchase Order" })
     }
 

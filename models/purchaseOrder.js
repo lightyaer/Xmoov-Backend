@@ -9,16 +9,24 @@ const purchaseOrderSchema = new mongoose.Schema({
     },
     _salesOrder: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true
+        required: [true, "Please choose a Sales Order."],
     },
-    _orderProducts: [ProductWrapperSchema],
+    _orderProducts: {
+        type: [ProductWrapperSchema],
+        validate: {
+            validator: function (v) {
+                return v.length === 0 ? false : true;
+            },
+            message: 'Please choose Product/s.'
+        }
+    },
     remarks: {
         type: String,
         required: [true, "Please enter some Remarks"]
     },
     tax: {
         type: Number,
-        default: 1
+        default: 0
     },
     discount: {
         type: Number,
