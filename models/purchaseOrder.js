@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
 const { ProductWrapperSchema } = require('../models/productsWrapper');
 const purchaseOrderSchema = new mongoose.Schema({
 

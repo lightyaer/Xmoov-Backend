@@ -158,11 +158,21 @@ router.get('/:id', authenticate, async (req, res) => {
 //SAVE SALES ORDER
 router.post('/create', authenticate, async (req, res) => {
     try {
+
+        let orderProducts = [];
+        req.body.products.map(item => {
+            orderProducts.push(
+                {
+                    _product: item._id,
+                    quantity: parseInt(item.quantity, 10)
+                }
+            )
+        })
         const salesOrder = new SalesOrder({
             _author: req.driver._id,
             _retailer: req.body._retailer,
-            orderDate: parseInt(req.body.orderDate, 10),
-            _orderProducts: req.body._orderProducts,
+            orderDate: req.body.orderDate,
+            _orderProducts: orderProducts,
             tax: req.body.tax,
             remarks: req.body.remarks,
             handling: req.body.handling,
@@ -177,7 +187,6 @@ router.post('/create', authenticate, async (req, res) => {
         return res.status(200).send(result);
 
     } catch (e) {
-        console.log(JSON.stringify(e, undefined, 2))
         if (e.errors) {
             let errStr = "";
             for (let err of Object.keys(e.errors)) {

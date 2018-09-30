@@ -70,12 +70,14 @@ router.post('/otp', cors(corsOptions), async (req, res) => {
             res.status(400).send({ message: 'OTP didn\'t Match' })
         }
     } catch (e) {
-        let errStr = "";
-        for (let err of Object.keys(e.errors)) {
-            errStr += e.errors[err].message + ',';
-        }
-        if (errStr.length > 0) {
-            return res.status(400).send({ message: errStr });
+        if (e.errors) {
+            let errStr = "";
+            for (let err of Object.keys(e.errors)) {
+                errStr += e.errors[err].message + ',';
+            }
+            if (errStr.length > 0) {
+                return res.status(400).send({ message: errStr });
+            }
         }
         res.status(400).send({ message: 'Couldn\'t Sign Up' })
     }

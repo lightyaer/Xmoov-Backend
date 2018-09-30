@@ -146,10 +146,18 @@ router.post('/create', authenticate, async (req, res) => {
 
     try {
 
+        let orderProducts = [];
+        req.body.products.map(item => {
+            orderProducts.push({
+                _product: item._id,
+                quantity: parseInt(item.quantity, 10)
+            })
+        })
+
         const purchaseOrder = new PurchaseOrder({
             _author: req.driver._id,
             _salesOrder: req.body._salesOrder,
-            _orderProducts: req.body._orderProducts,
+            _orderProducts: orderProducts,
             remarks: req.body.remarks,
             grandTotal: req.body.grandTotal,
             tax: req.body.tax,
